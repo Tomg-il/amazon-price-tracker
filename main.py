@@ -5,6 +5,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 import os
 from twilio.rest import Client
+import smtplib
 
 PRODUCT_URL = "https://www.amazon.com/dp/B09NPTDXD1?pd_rd_i=B09NPTDXD1&pf_rd_p=b000e0a0-9" \
               "e93-480f-bf78-a83c8136dfcb&pf_rd_r=VS9MEX605FW93YXAFECY&pd_rd_wg=4CvCK&pd_rd_w" \
@@ -35,15 +36,34 @@ def check_product_page_price():
     return last_price
 
 
-def send_price_alert(price):
+def send_price_alert_sms(price):
     client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     client.messages.create(from_=os.environ.get('TWILIO_PHONE_NUMBER'),
                            to=os.environ.get('CELL_PHONE_NUMBER'),
-                           body=f'The price for the surfe hat on Amazon dropped to {price} Go get '
+                           body=f'The price for the surf hat on Amazon dropped to {price} Go get '
                                 f'it now!')
     print("SMS sent")
 
 
+def send_pride_alert_email(price):
+    # msg = f'The price for the surf hat on Amazon dropped to {price} Go get it now!'
+    msg_subject = 'Amazon price Alert'
+    msg_from = os.environ.get('MY_EMAIL_ACCOUNT')
+    msg_to = os.environ.get('MY_EMAIL_ACCOUNT')
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+        mail_account = os.environ.get('MY_EMAIL_ACCOUNT')
+        mail_pass = os.environ.get('MY_EMAIL_PASSWORD')
+        smtp_server.login(mail_account, mail_pass)
+        msg = f'Subject: Price Alert!\n' \
+              f'The price for the surf hat on Amazon dropped to {price} Go get it now!'
+        smtp_server.sendmail(msg_from, msg_to, msg)
+
+    print("main sent")
+
+
 current_price = check_product_page_price()
 if current_price < PRODUCT_TARGET_PRICE:
-    send_price_alert(current_price)
+    send_price_alert_sms(current_price)
+    send_pride_alert_email(current_price)
+
